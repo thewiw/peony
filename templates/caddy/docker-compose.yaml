@@ -1,0 +1,27 @@
+services:
+  caddy:
+    container_name: ${container_name}
+    image: caddy:latest
+    restart: always
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    networks:
+      - vpn-proxy
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile 
+      - ./static:/www/static
+      - ./data:/data
+      - ./config:/config
+
+networks:
+  vpn-proxy:
+    driver: bridge
+    name: vpn-proxy
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.28.0.0/24"

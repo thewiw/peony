@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sélection du VPN</title>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+        }
+        .banner {
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+            background-color: #4CAF50;
+            color: #fff;
+            font-weight: bold;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        .selector {
+            text-align: center;
+            max-width: 400px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 60px;
+        }
+        h1 {
+            font-size: 1.8em;
+            color: #333;
+        }
+        p {
+            font-size: 1em;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        .enter-button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 1.1em;
+            color: #fff;
+            background-color: #007bff;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        .enter-button:hover {
+            background-color: #0056b3;
+        }
+        .exit-button {
+            display: inline-block;
+            padding: 5px 5px;
+            font-size: 1.1em;
+            color: #fff;
+            background-color: #007bff;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        .exit-button:hover {
+            background-color: #0056b3;
+        }
+        /* Style de l'iframe */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Bannière de proxy -->
+    <div id="banner" class="banner">
+    </div>
+
+    <div id="menu" class="selector">
+    </div>
+
+    <div id="admin" style="width:100%; height:100%"></div>
+
+    <script>
+        const vpns = [];
+
+        // Fonction pour définir un cookie
+        function setCookie(name, value, hours) {
+            const date = new Date();
+            date.setTime(date.getTime() + (hours * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + value + ";";// + expires + ";path=/";
+        }
+
+        // Fonction pour vérifier la présence du cookie use_vpn
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            var cookie = (parts.length === 2) ? parts.pop().split(';').shift() : null;
+            return ( cookie && cookie != null && cookie.trim().length > 0 ) ? cookie : null;
+        }
+
+        function clearCookies() {
+            setCookie('BEEGO_FLASH', '', 0);
+            setCookie('beegosessionID', '', 0);
+            setCookie('_xsrf', '', 0);
+            setCookie('use_vpn', 'none', 0);
+        }
+
+        function isVpnCookie(cookie) {
+            if ( !cookie || cookie == 'null' || cookie == 'none' )
+                return false;
+            return vpns.find((element) => element == cookie);
+        }
+
+        function onExitEvent(event) {
+            clearCookies();
+            hideAdmin();
+        }
+
+        function onEnterEvent(event) {
+            if ( event && event.target && event.target.id ) {
+                const vpn = event.target.id.split('enter-')[1];
+                if ( vpn && vpn.trim().length > 0 ) {
+                    clearCookies();
+                    setCookie('use_vpn', vpn, 1);
+                    displayAdmin();
+                }
+            }
+        }
+
+        function removeListeners() {
+            var element;
+
+            for ( idx = 0; idx < vpns.length; idx++ )
+                if ( ( element = document.getElementById('enter-' + vpns[idx]) ) )
+                    element.removeEventListener('click', onEnterEvent);
+
+            if ( ( element = document.getElementById('exit-vpn') ) )
+                element.removeEventListener('click', onExitEvent);
+        }
+
+        function addListeners() {
+            var element;
+
+            for ( idx = 0; idx < vpns.length; idx++ )
+                if ( ( element = document.getElementById('enter-' + vpns[idx]) ) )
+                    element.addEventListener('click', onEnterEvent);
+
+            if ( ( element = document.getElementById('exit-vpn') ) )
+                element.addEventListener('click', onExitEvent);
+        }
+
+        function updateBanner(enterVPN) {
+            var html = '';
+            const banner = document.getElementById('banner');
+
+            if ( enterVPN ) {
+                html = 'VPN actuellement sélectionné : ' + getCookie('use_vpn');
+                html += '&nbsp;&nbsp;<button id="exit-vpn" class="exit-button">Sortir du VPN</button>';
+                banner.style.backgroundColor = '#4CAF50';
+            }
+            else {
+                html = 'Aucun VPN sélectionné';
+                banner.style.backgroundColor = '#FF9800';
+            }
+
+            banner.innerHTML = html;
+        }
+
+        function updateMenu(enterVPN) {
+            var html = '';
+            const menu = document.getElementById('menu');
+
+            if ( enterVPN ) {
+                menu.classList.remove('selector');
+                menu.style.width = '0px';
+                menu.style.height = '0px';
+            }
+            else {
+                menu.classList.add('selector');
+                menu.style.width = '75%';
+                menu.style.height = '75%';
+
+                html = '<h1>Bienvenue sur le service VPN</h1>';
+                for ( idx = 0; idx < vpns.length; idx++ )
+                    html += '<div style="padding-top:5px"><button id="enter-' + vpns[idx] + '" class="enter-button">Accéder à ' + vpns[idx] + '</button></div>';
+            }
+
+            menu.innerHTML = html;
+        }
+
+        function updateAdmin(enterVPN) {
+            var html = '';
+            const admin = document.getElementById('admin');
+
+            if ( enterVPN ) {
+                html = '<iframe width="100%" height="100%" style="width:100%; height:100%;" src="/login"></iframe>';
+                admin.style.width = '100%';
+                admin.style.height = '90%';
+            }
+            else {
+                admin.style.width = '0px';
+                admin.style.height = '0px';
+            }
+
+            admin.innerHTML = html;
+        }
+
+        function displayAdmin() {
+            removeListeners();
+
+            updateBanner(true);
+            updateMenu(true);
+            updateAdmin(true);
+
+            addListeners();
+        }
+
+        function hideAdmin() {
+            removeListeners();
+
+            updateBanner(false);
+            updateMenu(false);
+            updateAdmin(false);
+
+            addListeners();
+        }
+
+        const cookie = getCookie('use_vpn');
+        if ( isVpnCookie(cookie) )
+            displayAdmin();
+        else
+            hideAdmin();
+
+    </script>
+
+</body>
+</html>

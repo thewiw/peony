@@ -1,0 +1,25 @@
+${hostname} {
+    @selectPath {
+        path /vpn-select.html
+    }
+    handle @selectPath {
+        file_server
+        root * /www/static
+        try_files /vpn-select.html
+    }
+
+    @hasNoCookie {
+        not header Cookie *use_vpn*
+    }
+    handle @hasNoCookie {
+        redir https://{host}/vpn-select.html
+    }
+
+    @hasEmptyCookie {
+        header Cookie *use_vpn=null*
+        header Cookie *use_vpn=none*
+    }
+    handle @hasEmptyCookie {
+        redir https://{host}/vpn-select.html
+    }
+}
