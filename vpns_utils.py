@@ -30,13 +30,17 @@ def generate_password() -> str:
 
 
 def get_backup_path() -> str:
-    wiw_path = "/opt/wiw/backup"
-    vpn_path = "/opt/vpn/backup"
-    base_path = wiw_path if os.path.exists(wiw_path) else vpn_path
-    if not os.path.exists(base_path):
-        os.system(f"sudo mkdir -p {base_path}")
-        os.system(f"sudo chown -R $USER:$USER {os.path.dirname(base_path)}")
-    return base_path
+    wiw_base = "/opt/wiw"
+    vpn_base = "/opt/vpn"
+    
+    base_dir = wiw_base if os.path.exists(wiw_base) else vpn_base
+    backup_path = os.path.join(base_dir, "backup")
+    
+    if not os.path.exists(backup_path):
+        os.system(f"sudo mkdir -p {backup_path}")
+        os.system(f"sudo chown -R $USER:$USER {base_dir}")
+        
+    return backup_path
 
 
 def find_caddy_server() -> str:
