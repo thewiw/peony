@@ -2,11 +2,11 @@ import os
 import argparse
 from datetime import datetime
 from vpns_docker_manager import DockerManager
-from vpns_utils import get_caddy_path
+from vpns_utils import get_caddy_path, load_template_with_update, read_settings, get_backup_path
 
 
 def backup_caddy(docker: DockerManager, name: str) -> None:
-    backup_dir = docker.get_backup_path()
+    backup_dir = get_backup_path()
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
     backup_file = os.path.join(backup_dir, f"{name}-{timestamp}-remove.tgz")
 
@@ -52,7 +52,7 @@ def generate_caddy_templates(
     ]
 
     for template, subdir in templates:
-        content = docker.load_template_with_update(
+        content = load_template_with_update(
             f"templates/caddy/{template}", context
         )
         with open(os.path.join(output_dir, subdir, template), "w") as f:
@@ -64,7 +64,7 @@ def create_caddy(docker: DockerManager, name: str, config: dict) -> None:
     if os.path.exists(output_dir):
         raise Exception(f"Directory {output_dir} already exist")
     try:
-        #    update_hosts_file(config["hostname"])
+        # update_hosts_file(config["hostname"])
         create_directory(output_dir)
         generate_caddy_templates(docker, output_dir, name, config)
         docker.start_compose(os.path.join(output_dir, "docker-compose.yaml"))
@@ -102,7 +102,7 @@ def main():
         docker = DockerManager()
 
         if args.action == "create":
-            config = docker.read_settings("caddy_settings", {"hostname": None})
+            config = read_settings("caddy_settings", {"hostname": None})
             if not config.get("hostname"):
                 raise ValueError("HOSTNAME is mandatory in caddy_settings")
             create_caddy(docker, args.name, config)

@@ -49,34 +49,12 @@ class DockerManager:
     def start_compose(self, compose_file: str) -> None:
         if os.system(f"docker compose -f {compose_file} up -d") != 0:
             raise Exception("Failed to start docker-compose")
+        
+    def check_for_vpns(self, caddy_name: str) -> tuple[bool, list]:
+        vpns = set()
+        for container in self.client.containers.list(all=True):
+            name = container.name
+            if name.endswith("-ui") and name != f"{caddy_name}-ui":
+                vpns.add(name[:-3])
+        return bool(vpns), sorted(list(vpns))
 
-    def read_settings(self, file_path: str, defaults: dict = None) -> dict:
-        settings = defaults or {}
-        try:
-            with open(file_path) as f:
-                for line in f:
-                    if line.strip() and not line.startswith("#"):
-                        key, value = line.split("=", 1)
-                        settings[key.strip().lower()] = value.strip()
-            return settings
-        except FileNotFoundError:
-            raise Exception(f"Settings file {file_path} not found")
-
-    def load_template_with_update(self, template_path: str, context: dict) -> str:
-        try:
-            with open(template_path) as f:
-                content = f.read()
-                for key, value in context.items():
-                    content = content.replace(f"${{{key}}}", str(value))
-            return content
-        except FileNotFoundError:
-            raise Exception(f"Template {template_path} not found")
-
-    def get_backup_path(self) -> str:
-        wiw_path = "/opt/wiw/backup"
-        vpn_path = "/opt/vpn/backup"
-        base_path = wiw_path if os.path.exists(wiw_path) else vpn_path
-        if not os.path.exists(base_path):
-            os.system(f"sudo mkdir -p {base_path}")
-            os.system(f"sudo chown -R $USER:$USER {os.path.dirname(base_path)}")
-        return base_path

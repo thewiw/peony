@@ -14,7 +14,6 @@ from vpns_utils import (
     find_caddy_server,
 )
 
-
 def get_config_path(name: str = None) -> str:
     wiw_path = "/opt/wiw/config"
     vpn_path = "/opt/vpn/config"
