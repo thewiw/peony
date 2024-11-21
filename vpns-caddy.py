@@ -82,7 +82,7 @@ def remove_caddy(docker: DockerManager, name: str) -> None:
     has_vpns, vpns = check_for_vpns(docker, name)
     if has_vpns:
         raise Exception(
-            f"Cannot remove Caddy while VPNs exist.\nActive VPNs: {', '.join(vpns)}"
+            f"Cannot remove Caddy while VPNs exist.\nActive VPNs container: {', '.join(vpns)}"
         )
 
     backup_caddy(docker, name)

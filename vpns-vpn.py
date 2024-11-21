@@ -190,6 +190,7 @@ def create_vpn(docker: DockerManager, name: str, caddy_name: str, config: dict) 
             "admin_password": admin_password,
             "hostname": config["caddy_hostname"],
             **subnets,
+            "EASYRSA_DN": config.get("EASYRSA_DN", "org"),
             "EASYRSA_REQ_COUNTRY": config.get("easyrsa_req_country", "FR"),
             "EASYRSA_REQ_PROVINCE": config.get("easyrsa_req_province", "GE"),
             "EASYRSA_REQ_CITY": config.get("easyrsa_req_city", "Nancy"),
