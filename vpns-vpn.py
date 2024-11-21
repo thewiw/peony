@@ -38,7 +38,8 @@ def _generate_password() -> str:
 
 def calculate_subnets(name: str) -> dict:
     if any(c.isdigit() for c in name):
-        subnet_num = int("".join(filter(str.isdigit, name)))
+        vpn_num = int("".join(filter(str.isdigit, name)))
+        subnet_num = vpn_num * 3 - 2
     else:
         used_subnets = {0}
         for net in os.popen("docker network ls --format '{{.Name}}'").read().split():
@@ -50,8 +51,9 @@ def calculate_subnets(name: str) -> dict:
                         used_subnets.add(int(subnet))
                     except ValueError:
                         continue
-
-        subnet_num = min(set(range(1, 255)) - used_subnets)
+        subnet_num = 1
+        while subnet_num in used_subnets or subnet_num+1 in used_subnets or subnet_num+2 in used_subnets:
+            subnet_num += 3
 
     return {
         "docker_subnet": f"172.28.{subnet_num}.0/24",
@@ -59,7 +61,6 @@ def calculate_subnets(name: str) -> dict:
         "guest_subnet": f"10.0.{subnet_num+1}.0",
         "home_subnet": f"10.0.{subnet_num+2}.0",
     }
-
 
 def backup_vpn(docker: DockerManager, caddy_name: str, vpn_name: str) -> None:
     backup_dir = get_backup_path()
