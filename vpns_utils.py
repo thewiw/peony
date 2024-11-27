@@ -25,7 +25,7 @@ def create_vpn_directories(output_dir: str) -> None:
 
 
 def generate_password() -> str:
-    characts = string.ascii_letters + string.digits + "@#$%"
+    characts = string.ascii_letters + string.digits
     return "".join(secrets.choice(characts) for _ in range(12))
 
 
@@ -59,16 +59,29 @@ def find_caddy_server() -> str:
 
 def read_settings(file_path: str, defaults: dict = None) -> dict:
     settings = defaults or {}
-    try:
-        with open(file_path) as f:
-            for line in f:
-                if line.strip() and not line.startswith("#"):
-                    key, value = line.split("=", 1)
-                    settings[key.strip().lower()] = value.strip()
-        return settings
-    except FileNotFoundError:
-        raise Exception(f"Settings file {file_path} not found")
+    
+    wiw_path = "/opt/wiw"
+    vpn_path = "/opt/vpn"
 
+    base_paths = [
+        os.path.join(wiw_path, file_path),
+        os.path.join(vpn_path, file_path),
+        file_path
+    ]
+    
+    for path in base_paths:
+        try:
+            with open(path) as f:
+                for line in f:
+                    if line.strip() and not line.startswith("#"):
+                        key, value = line.split("=", 1)
+                        settings[key.strip().lower()] = value.strip()
+                print(f"Settings load from: {path}")
+                return settings
+        except FileNotFoundError:
+            continue
+            
+    raise Exception(f"Settings file {file_path} not found in {base_paths}")
 
 def load_template_with_update(template_path: str, context: dict) -> str:
     try:

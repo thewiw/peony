@@ -1,6 +1,6 @@
 import os
 import docker
-from typing import Dict, Set, Optional, Tuple
+from typing import Set, Optional
 from docker.errors import NotFound
 
 
@@ -25,8 +25,16 @@ class DockerManager:
     def remove_container(self, name: str) -> None:
         container = self.get_container(name)
         if container:
-            container.stop(timeout=10)
+            container.stop(timeout=15)
             container.remove(force=True)
+
+    def stop_container(self, name: str) -> None:
+        container = self.get_container(name)
+        if container:
+            try:
+                container.stop(timeout=15)
+            except docker.errors.APIError as e:
+                raise Exception(f"Failed to stop container {name}: {e}")
 
     def get_used_ports(self) -> Set[int]:
         used_ports = set()
@@ -49,7 +57,7 @@ class DockerManager:
     def start_compose(self, compose_file: str) -> None:
         if os.system(f"docker compose -f {compose_file} up -d") != 0:
             raise Exception("Failed to start docker-compose")
-        
+
     def check_for_vpns(self, caddy_name: str) -> tuple[bool, list]:
         vpns = set()
         for container in self.client.containers.list(all=True):
@@ -57,4 +65,3 @@ class DockerManager:
             if name.endswith("-ui") and name != f"{caddy_name}-ui":
                 vpns.add(name[:-3])
         return bool(vpns), sorted(list(vpns))
-

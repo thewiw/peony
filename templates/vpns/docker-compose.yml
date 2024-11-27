@@ -1,0 +1,50 @@
+services:
+  openvpn:
+    container_name: ${container_name}
+    image: d3vilh/openvpn-server:latest
+    privileged: true
+    ports:
+      - "${vpn_port}:1194/${protocol}"
+    networks:
+      - vpn
+    environment:
+      TRUST_SUB: "${trust_subnet}/24"
+      GUEST_SUB: "${guest_subnet}/24"
+      HOME_SUB: "${home_subnet}/24"
+    volumes:
+      - ${volume_path}/pki:/etc/openvpn/pki
+      - ${volume_path}/clients:/etc/openvpn/clients
+      - ${volume_path}/config:/etc/openvpn/config
+      - ${volume_path}/staticclients:/etc/openvpn/staticclients
+      - ${volume_path}/log:/var/log/openvpn
+      - ${volume_path}/fw-rules.sh:/opt/app/fw-rules.sh
+      - ${volume_path}/checkpsw.sh:/opt/app/checkpsw.sh
+      - ${volume_path}/server.conf:/etc/openvpn/server.conf
+    cap_add:
+      - NET_ADMIN
+    restart: always
+    depends_on:
+      - openvpn-ui
+
+  openvpn-ui:
+    container_name: ${container_name_ui}
+    image: d3vilh/openvpn-ui:latest
+    environment:
+      - OPENVPN_ADMIN_USERNAME=admin
+      - OPENVPN_ADMIN_PASSWORD=${admin_password}
+    privileged: true
+    networks:
+      vpn:
+      vpn-proxy:
+    volumes:
+      - ${volume_path}/:/etc/openvpn
+      - ${volume_path}/db:/opt/openvpn-ui/db
+      - ${volume_path}/pki:/usr/share/easy-rsa/pki
+    restart: always
+
+networks:
+  vpn:
+    name: ${container_name}-net
+    external: true
+  vpn-proxy:
+    external: true

@@ -21,20 +21,16 @@ def get_config_path(name: str = None) -> str:
     if not os.path.exists(base_path):
         os.system(f"sudo mkdir -p {base_path}")
         os.system(f"sudo chown -R $USER:$USER {os.path.dirname(base_path)}")
-
     return os.path.join(base_path, name) if name else base_path
-
 
 def _create_vpn_directories(output_dir: str) -> None:
     directories = ["config", "pki", "clients", "db", "staticclients", "log"]
     for dir in directories:
         os.makedirs(os.path.join(output_dir, dir), exist_ok=True)
 
-
 def _generate_password() -> str:
     characts = string.ascii_letters + string.digits + "@#$%"
     return "".join(secrets.choice(characts) for _ in range(12))
-
 
 def calculate_subnets(name: str) -> dict:
     if any(c.isdigit() for c in name):
@@ -68,10 +64,43 @@ def backup_vpn(docker: DockerManager, caddy_name: str, vpn_name: str) -> None:
     backup_file = os.path.join(
         backup_dir, f"{caddy_name}-{vpn_name}-{timestamp}-remove.tgz"
     )
-
     backup_cmd = f"sudo tar czf {backup_file} -C / opt/docker/volumes/{caddy_name} opt/vpn/config/{vpn_name}"
     os.system(backup_cmd)
 
+def _generate_vpn_context(docker: DockerManager, name: str, config: dict, output_dir: str, admin_password: str = None) -> dict:
+    subnets = calculate_subnets(name)
+    return {
+        "container_name": name,
+        "container_name_ui": f"{name}-ui",
+        "volume_path": output_dir,
+        "vpn_port": docker.get_free_port() if admin_password else docker.get_container_port(name),
+        "protocol": config.get("openvpn_prot", "udp"),
+        "admin_password": admin_password,
+        "hostname": config["caddy_hostname"],
+        **subnets,
+        "EASYRSA_DN": config.get("EASYRSA_DN", "org"),
+        "EASYRSA_REQ_COUNTRY": config.get("easyrsa_req_country", "FR"),
+        "EASYRSA_REQ_PROVINCE": config.get("easyrsa_req_province", "GE"),
+        "EASYRSA_REQ_CITY": config.get("easyrsa_req_city", "Nancy"),
+        "EASYRSA_REQ_ORG": config.get("easyrsa_req_org", "TheWiw"),
+        "EASYRSA_REQ_EMAIL": config.get("easyrsa_req_email", "willy@thewiw.com"),
+    }
+
+def _update_vpn_configs(output_dir: str, context: dict) -> None:
+    templates = [
+        ("server.conf", ""),
+        ("client.conf", "config/"),
+        ("easy-rsa.vars", "config/"),
+        ("docker-compose.yml", "")
+    ]
+    
+    for template, subdir in templates:
+        content = load_template_with_update(f"templates/vpns/{template}", context)
+        target_dir = os.path.join(output_dir, subdir)
+        os.makedirs(target_dir, exist_ok=True)
+        target_path = os.path.join(target_dir, template)
+        with open(target_path, "w") as f:
+            f.write(content)
 
 def _update_caddy_config(
     docker: DockerManager,
@@ -106,7 +135,6 @@ def _update_caddy_config(
     with open(vpn_select_path, "w") as f:
         f.write(content)
 
-    # Mise à jour Caddyfile
     with open(caddyfile_path, "r") as f:
         caddy_content = f.read().strip()
 
@@ -160,73 +188,40 @@ def _update_caddy_config(
     with open(caddyfile_path, "w") as f:
         f.write(caddy_content)
 
-
 def create_vpn(docker: DockerManager, name: str, caddy_name: str, config: dict) -> str:
     caddy_dir = get_caddy_path(caddy_name)
     if not os.path.exists(caddy_dir):
         raise Exception(f"Caddy server {caddy_name} not found")
-
+    
     output_dir = get_config_path(name)
     if os.path.exists(output_dir):
         raise Exception(f"VPN directory {output_dir} already exists")
-
+    
     try:
         os.system(
             f"git clone https://github.com/d3vilh/openvpn-server.git {output_dir}"
         )
-        # os.system(f"sudo chown -R $USER:$USER {output_dir}")
+        
         _create_vpn_directories(output_dir)
-
-        subnets = calculate_subnets(name)
-        vpn_port = docker.get_free_port()
+        
         admin_password = _generate_password()
-
-        context = {
-            "container_name": name,
-            "container_name_ui": f"{name}-ui",
-            "volume_path": output_dir,
-            "vpn_port": vpn_port,
-            "protocol": config.get("openvpn_prot", "udp"),
-            "admin_password": admin_password,
-            "hostname": config["caddy_hostname"],
-            **subnets,
-            "EASYRSA_DN": config.get("EASYRSA_DN", "org"),
-            "EASYRSA_REQ_COUNTRY": config.get("easyrsa_req_country", "FR"),
-            "EASYRSA_REQ_PROVINCE": config.get("easyrsa_req_province", "GE"),
-            "EASYRSA_REQ_CITY": config.get("easyrsa_req_city", "Nancy"),
-            "EASYRSA_REQ_ORG": config.get("easyrsa_req_org", "TheWiw"),
-            "EASYRSA_REQ_EMAIL": config.get("easyrsa_req_email", "willy@thewiw.com"),
-        }
-
+        context = _generate_vpn_context(docker, name, config, output_dir, admin_password)
+        
         os.system(f"docker network rm {name}-net 2>/dev/null")
-        docker.create_network(name=f"{name}-net", subnet=subnets["docker_subnet"])
-
+        docker.create_network(name=f"{name}-net", subnet=context["docker_subnet"])
+        
         if os.system("docker network inspect vpn-proxy >/dev/null 2>&1") != 0:
             raise Exception("vpn-proxy network not found. Create Caddy first.")
 
-        templates = [
-            ("docker-compose.yaml", ""),
-            ("server.conf", ""),
-            ("client.conf", "config/"),
-            ("easy-rsa.vars", "config/"),
-        ]
-
-        for template, subdir in templates:
-            content = load_template_with_update(f"templates/vpns/{template}", context)
-            target_dir = os.path.join(output_dir, subdir)
-            os.makedirs(target_dir, exist_ok=True)
-            target_path = os.path.join(target_dir, template)
-            with open(target_path, "w") as f:
-                f.write(content)
-
+        _update_vpn_configs(output_dir, context)
         _update_caddy_config(docker, caddy_name, name, config["caddy_hostname"])
-
+        
         container = docker.get_container(caddy_name)
         if container:
             container.restart()
-
-        docker.start_compose(os.path.join(output_dir, "docker-compose.yaml"))
-
+        
+        docker.start_compose(os.path.join(output_dir, "docker-compose.yml"))
+        
         return admin_password
 
     except Exception as e:
@@ -238,6 +233,28 @@ def create_vpn(docker: DockerManager, name: str, caddy_name: str, config: dict) 
             pass
         raise e
 
+def update_vpn(docker: DockerManager, name: str, caddy_name: str, config: dict) -> None:
+    output_dir = get_config_path(name)
+    if not os.path.exists(output_dir):
+        raise Exception(f"VPN {name} not found")
+
+    try:
+        backup_vpn(docker, caddy_name, name)
+        context = _generate_vpn_context(docker, name, config, output_dir)
+        _update_vpn_configs(output_dir, context)
+
+        docker.stop_container(name)
+        docker.stop_container(f"{name}-ui")
+        docker.start_compose(os.path.join(output_dir, "docker-compose.yml"))
+        
+        _update_caddy_config(docker, caddy_name, name, config["caddy_hostname"])
+        caddy = docker.get_container(caddy_name)
+        if caddy:
+            caddy.restart()
+
+    except Exception as e:
+        print(f"Error updating VPN {name}: {str(e)}")
+        raise e
 
 def remove_vpn(docker: DockerManager, name: str, caddy_name: str) -> None:
     backup_vpn(docker, caddy_name, name)
@@ -261,10 +278,9 @@ def remove_vpn(docker: DockerManager, name: str, caddy_name: str) -> None:
     if os.path.exists(config_path):
         os.system(f"sudo rm -rf {config_path}")
 
-
 def main():
     parser = argparse.ArgumentParser(description="Manage OpenVPN servers")
-    parser.add_argument("action", choices=["create", "remove"])
+    parser.add_argument("action", choices=["create", "update", "remove"])
     parser.add_argument("name", help="VPN name")
     parser.add_argument("--caddy", help="Caddy container name")
     args = parser.parse_args()
@@ -291,6 +307,9 @@ def main():
             print(
                 f"Access the VPN Select page at https://{config['caddy_hostname']}/vpn-select.html"
             )
+        elif args.action == "update":
+            update_vpn(docker, args.name, caddy_name, config)
+            print(f"Updated VPN {args.name}")
         else:
             remove_vpn(docker, args.name, caddy_name)
             print(f"Removed VPN {args.name}")
@@ -298,7 +317,6 @@ def main():
     except Exception as err:
         print(f"Error: {err}")
         exit(1)
-
 
 if __name__ == "__main__":
     main()
