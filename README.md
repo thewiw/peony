@@ -107,6 +107,19 @@ Backup location follows the same directory checking logic:
 1. First try: `/opt/wiw/backup/`
 2. If not found, uses: `/opt/vpn/backup/`
 
+## Post-Initialization Steps
+
+Once you have ensured with the VPN logs that everything is initialized, you can access the dashboard UI.
+
+→ Click on **Configuration** → **OpenVPN Server**: Edit config (at the top of the page) to ensure everything is set up correctly.
+
+→ Click on **Configuration** → **OpenVPN Client**: View config (at the bottom of the page this time).
+
+→ Click on **Configuration** → **EasyRSA**: View vars to ensure everything is okay.
+
+If everything is set up correctly, you can access **Certificates** and create a certificate.
+
+
 ## Notes
 - First run must be Caddy creation before any VPN operations
 - After creating a new vpn this can take a bit of time to be operational because DH parameter generation can be time-consuming, especially with 4096-bit keys on slower hardware 
