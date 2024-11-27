@@ -19,8 +19,7 @@ def get_config_path(name: str = None) -> str:
     vpn_path = "/opt/vpn/config"
     base_path = wiw_path if os.path.exists(wiw_path) else vpn_path
     if not os.path.exists(base_path):
-        os.system(f"sudo mkdir -p {base_path}")
-        os.system(f"sudo chown -R $USER:$USER {os.path.dirname(base_path)}")
+        os.makedirs(base_path)
     return os.path.join(base_path, name) if name else base_path
 
 def _create_vpn_directories(output_dir: str) -> None:
@@ -311,13 +310,18 @@ def main():
 
         if args.action == "create":
             admin_password = create_vpn(docker, args.name, caddy_name, config)
-            print(f"Created VPN {args.name}")
-            print(f"UI Admin credentials:")
-            print(f"Username: admin")
-            print(f"Password: {admin_password}")
-            print(
-                f"Access the VPN Select page at https://{config['caddy_hostname']}/vpn-select.html"
-            )
+            vpn_port = docker.get_container_port(args.name)
+            subnets = calculate_subnets(args.name)
+            
+            print("\n=== VPN Summary ===")
+            print(f"UI Username: admin")
+            print(f"UI Password: {admin_password}")
+            print(f"Access URL: https://{config['caddy_hostname']}/vpn-select.html")
+            
+            print(f"Network mask: {subnets['trust_subnet']}/24")
+            print(f"Docker network mask: {subnets['docker_subnet']}")
+            print(f"External Port: {vpn_port}")
+            print(f"Host: {config['caddy_hostname']}")
         elif args.action == "update":
             update_vpn(docker, args.name, caddy_name, config)
             print(f"Updated VPN {args.name}")
