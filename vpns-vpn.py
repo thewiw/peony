@@ -69,11 +69,18 @@ def backup_vpn(docker: DockerManager, caddy_name: str, vpn_name: str) -> None:
 
 def _generate_vpn_context(docker: DockerManager, name: str, config: dict, output_dir: str, admin_password: str = None) -> dict:
     subnets = calculate_subnets(name)
+    
+    if not admin_password:
+        current_port = docker.get_container_port(name)
+        vpn_port = current_port if current_port else docker.get_free_port()
+    else:
+        vpn_port = docker.get_free_port()
+
     return {
         "container_name": name,
         "container_name_ui": f"{name}-ui",
         "volume_path": output_dir,
-        "vpn_port": docker.get_free_port() if admin_password else docker.get_container_port(name),
+        "vpn_port": vpn_port,
         "protocol": config.get("openvpn_prot", "udp"),
         "admin_password": admin_password,
         "hostname": config["caddy_hostname"],
@@ -242,15 +249,19 @@ def update_vpn(docker: DockerManager, name: str, caddy_name: str, config: dict) 
         backup_vpn(docker, caddy_name, name)
         context = _generate_vpn_context(docker, name, config, output_dir)
         _update_vpn_configs(output_dir, context)
-
+        
         docker.stop_container(name)
         docker.stop_container(f"{name}-ui")
-        docker.start_compose(os.path.join(output_dir, "docker-compose.yml"))
         
+        _update_caddy_config(docker, caddy_name, name, "", remove=True)
         _update_caddy_config(docker, caddy_name, name, config["caddy_hostname"])
+        
+        docker.start_compose(os.path.join(output_dir, "docker-compose.yml"))
         caddy = docker.get_container(caddy_name)
         if caddy:
             caddy.restart()
+
+        print(f"Successfully updated VPN {name}")
 
     except Exception as e:
         print(f"Error updating VPN {name}: {str(e)}")

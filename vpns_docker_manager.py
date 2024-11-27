@@ -53,6 +53,16 @@ class DockerManager:
         while port in used_ports:
             port += 1
         return port
+    
+    def get_container_port(self, name: str, container_port: int = 1194) -> Optional[int]:
+        container = self.get_container(name)
+        if container:
+            ports = container.attrs["NetworkSettings"]["Ports"]
+            port_bindings = ports.get(f"{container_port}/udp") or ports.get(f"{container_port}/tcp")
+            if port_bindings:
+                return int(port_bindings[0]["HostPort"])
+        return None
+
 
     def start_compose(self, compose_file: str) -> None:
         if os.system(f"docker compose -f {compose_file} up -d") != 0:
