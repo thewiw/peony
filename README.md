@@ -90,6 +90,9 @@ sudo python3 vpns-backup.py --file custom-backup.tgz
 
 # Specify Caddy name
 sudo python3 vpns-backup.py --caddy custom_caddy
+
+# Combined options
+sudo python3 vpns-backup.py --dest /path/to/backup --file my-backup.tgz --caddy custom-caddy
 ```
 
 ## Automatic Backup System

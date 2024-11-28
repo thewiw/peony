@@ -6,6 +6,13 @@ import secrets
 def get_config_path(name: str = None) -> str:
     wiw_path = "/opt/wiw/config"
     vpn_path = "/opt/vpn/config"
+
+    if name:
+        if os.path.exists(os.path.join(wiw_path, name)):
+            return os.path.join(wiw_path, name)
+        if os.path.exists(os.path.join(vpn_path, name)):
+            return os.path.join(vpn_path, name)
+        
     base_path = wiw_path if os.path.exists(wiw_path) else vpn_path
     if not os.path.exists(base_path):
         os.system(f"sudo mkdir -p {base_path}")
