@@ -76,7 +76,6 @@ def read_settings(file_path: str, defaults: dict = None) -> dict:
                     if line.strip() and not line.startswith("#"):
                         key, value = line.split("=", 1)
                         settings[key.strip().lower()] = value.strip()
-                print(f"Settings load from: {path}")
                 return settings
         except FileNotFoundError:
             continue

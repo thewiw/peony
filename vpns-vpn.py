@@ -59,13 +59,18 @@ def calculate_subnets(name: str) -> dict:
 
 def backup_vpn(docker: DockerManager, caddy_name: str, vpn_name: str) -> None:
     backup_dir = get_backup_path()
+    vpn_path = get_config_path(vpn_name)
+    
+    if not os.path.exists(vpn_path):
+        return
+        
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
     backup_file = os.path.join(
         backup_dir, f"{caddy_name}-{vpn_name}-{timestamp}-remove.tgz"
     )
-    backup_cmd = f"sudo tar czf {backup_file} -C / opt/docker/volumes/{caddy_name} opt/vpn/config/{vpn_name}"
+    backup_cmd = f"sudo tar czf {backup_file} -C / opt/docker/volumes/{caddy_name} {vpn_path}"
     os.system(backup_cmd)
-
+    
 def _generate_vpn_context(docker: DockerManager, name: str, config: dict, output_dir: str, admin_password: str = None) -> dict:
     subnets = calculate_subnets(name)
     
@@ -267,26 +272,36 @@ def update_vpn(docker: DockerManager, name: str, caddy_name: str, config: dict) 
         raise e
 
 def remove_vpn(docker: DockerManager, name: str, caddy_name: str) -> None:
-    backup_vpn(docker, caddy_name, name)
+   vpn_path = get_config_path(name)
+   container = docker.get_container(name)
+   
+   if not os.path.exists(vpn_path) and not container:
+       print(f"No VPN configuration found in {vpn_path}")
+       raise Exception(f"VPN {name} does not exist. Nothing to remove.")
 
-    for container_name in [name, f"{name}-ui"]:
-        docker.remove_container(container_name)
+   try:
+       if os.path.exists(vpn_path):
+           backup_vpn(docker, caddy_name, name)
 
-    _update_caddy_config(docker, caddy_name, name, "", remove=True)
+       for container_name in [name, f"{name}-ui"]:
+           docker.remove_container(container_name)
 
-    caddy = docker.get_container(caddy_name)
-    if caddy:
-        caddy.restart()
+       _update_caddy_config(docker, caddy_name, name, "", remove=True)
+       caddy = docker.get_container(caddy_name)
+       if caddy:
+           caddy.restart()
 
-    try:
-        network = docker.client.networks.get(f"{name}-net")
-        network.remove()
-    except docker.errors.NotFound:
-        print(f"Network {name}-net already removed")
+       try:
+           network = docker.client.networks.get(f"{name}-net")
+           network.remove()
+       except docker.errors.NotFound:
+           print(f"Network {name}-net already removed")
 
-    config_path = get_config_path(name)
-    if os.path.exists(config_path):
-        os.system(f"sudo rm -rf {config_path}")
+       if os.path.exists(vpn_path):
+           os.system(f"sudo rm -rf {vpn_path}")
+
+   except Exception as e:
+       raise Exception(f"Failed to remove VPN {name}: {str(e)}")
 
 def main():
     parser = argparse.ArgumentParser(description="Manage OpenVPN servers")
@@ -298,6 +313,7 @@ def main():
     try:
         docker = DockerManager()
         caddy_name = args.caddy or find_caddy_server()
+        vpn_path = get_config_path(args.name)
         if not caddy_name:
             raise Exception(
                 "No Caddy server found. Create one first with vpns-caddy.py"
@@ -314,20 +330,20 @@ def main():
             subnets = calculate_subnets(args.name)
             
             print("\n=== VPN Summary ===")
+            print(f"VPN Name: {args.name}")
             print(f"UI Username: admin")
-            print(f"UI Password: {admin_password}")
-            print(f"Access URL: https://{config['caddy_hostname']}/vpn-select.html")
-            
+            print(f"UI Password: {admin_password}") 
+            print("\n======")           
             print(f"Network mask: {subnets['trust_subnet']}/24")
             print(f"Docker network mask: {subnets['docker_subnet']}")
             print(f"External Port: {vpn_port}")
             print(f"Host: {config['caddy_hostname']}")
         elif args.action == "update":
             update_vpn(docker, args.name, caddy_name, config)
-            print(f"Updated VPN {args.name}")
+            print(f"Updated VPN {args.name} in {vpn_path}")
         else:
             remove_vpn(docker, args.name, caddy_name)
-            print(f"Removed VPN {args.name}")
+            print(f"Removed VPN {args.name} from {vpn_path}")
 
     except Exception as err:
         print(f"Error: {err}")

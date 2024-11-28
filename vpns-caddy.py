@@ -109,7 +109,7 @@ def main():
             create_caddy(docker, args.name, config)
             print(f"Created Caddy server {args.name}")
             print(
-                f"Access the VPN Select page at https://{config['hostname']}/vpn-select.html"
+                f"\nAccess the VPN Select page at https://{config['hostname']}/vpn-select.html"
             )
         else:
             remove_caddy(docker, args.name)
