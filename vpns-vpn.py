@@ -95,6 +95,12 @@ def _generate_vpn_context(docker: DockerManager, name: str, config: dict, output
         "EASYRSA_REQ_CITY": config.get("easyrsa_req_city", "Nancy"),
         "EASYRSA_REQ_ORG": config.get("easyrsa_req_org", "TheWiw"),
         "EASYRSA_REQ_EMAIL": config.get("easyrsa_req_email", "willy@thewiw.com"),
+        "EASYRSA_REQ_OU": config.get("EASYRSA_REQ_OU", ""),
+        "EASYRSA_KEY_SIZE": config.get("EASYRSA_KEY_SIZE", "2048"),
+        "EASYRSA_CA_EXPIRE": config.get("EASYRSA_CA_EXPIRE", "10958"),
+        "EASYRSA_CERT_EXPIRE": config.get("EASYRSA_CERT_EXPIRE", "5478"),
+        "EASYRSA_CERT_RENEW": config.get("EASYRSA_CERT_RENEW", "365"),
+        "EASYRSA_CRL_DAYS": config.get("EASYRSA_CRL_DAYS", "730"),
     }
 
 def _update_vpn_configs(output_dir: str, context: dict) -> None:
@@ -284,7 +290,6 @@ def remove_vpn(docker: DockerManager, name: str, caddy_name: str) -> None:
    container = docker.get_container(name)
    
    print("\nRemoving VPN server (this might take few minutes)...")
-
    
    if not os.path.exists(vpn_path) and not container:
        print(f"No VPN configuration found in {vpn_path}")
