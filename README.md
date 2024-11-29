@@ -82,14 +82,13 @@ EASYRSA_REQ_EMAIL=       # Admin email address
 EASYRSA_REQ_OU=          # Organizational Unit (optional)
 
 # Certificate Parameters (optional with defaults):
-EASYRSA_KEY_SIZE=4096    # Key size in bits 2048 or 4096 recommanded
-EASYRSA_CA_EXPIRE=10958  # CA certificate expiry in days
-EASYRSA_CERT_EXPIRE=5478 # Server certificate expiry in days
-EASYRSA_CERT_RENEW=365   # Certificate renewal period in days
-EASYRSA_CRL_DAYS=730     # Certificate validity period
+EASYRSA_KEY_SIZE=    # Key size in bits 2048 or 4096 recommended
+EASYRSA_CA_EXPIRE=  # CA certificate expiry in days default
+EASYRSA_CERT_EXPIRE= # Server certificate expiry in days
+EASYRSA_CERT_RENEW=   # Certificate renewal period in days
+EASYRSA_CRL_DAYS=     # Certificate validity period
 
 # OpenVPN Configuration (optional with defaults):
-OPENVPN_PORT=1194       # OpenVPN port
 OPENVPN_PROT=udp        # Protocol (udp or tcp)
 ```
 
@@ -200,7 +199,8 @@ sudo python3 vpns-backup.py --dest /documents/backups --file backup.tgz --caddy 
    - Configuration files must be properly filled first
    - Caddy MUST be installed before creating any VPNs
    - VPNs can be created after Caddy is running
-   - We suggest you to only edit `vpn_settings` and `caddy_settings` files
+   - We suggest you to only edit `vpn_settings` and `caddy_settings`
+   - You can also use the UI dashboard for additional settings
 
 2. First VPN Creation
    - Initial setup may take time (key generation)
