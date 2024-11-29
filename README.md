@@ -68,11 +68,13 @@ Notes:
 
 ### VPN Configuration (vpn_settings)
 Before creating any VPN, configure `vpn_settings` at project root:
+
 ```bash
 # Required - Must Fill:
 CADDY_HOSTNAME=          # Must match HOSTNAME from caddy_settings
 
 # Easy-RSA Certificate Configuration:
+
 EASYRSA_DN=              # Distinguished name (e.g., "org")
 EASYRSA_REQ_COUNTRY=     # Two-letter country code (e.g., "FR")
 EASYRSA_REQ_PROVINCE=    # State or province
@@ -211,7 +213,8 @@ sudo python3 vpns-backup.py --dest /documents/backups --file backup.tgz --caddy 
    - All scripts require sudo privileges
    - Python 3 with required packages (see requirements.txt)
    - Docker installed and running
-   
+
+
 
 ## Accessing Your VPNs
 
@@ -219,3 +222,17 @@ After setup is complete:
 1. Access the VPN selection page: `https://[your-hostname]/vpn-select.html`
 2. Choose your VPN from the list
 3. Log in to the management interface with provided credentials
+
+### Verify Settings
+
+1. Click on Configuration → OpenVPN Server: Edit config (at the top of the page) to ensure everything is set up correctly.
+
+2. Click on Configuration → OpenVPN Client: View config (at the bottom of the page this time).
+
+3. Click on Configuration → EasyRSA: View vars to ensure everything is okay.
+
+4. If everything is set up correctly, you can access Certificates and create a certificate.
+
+#### Troubleshooting
+**Verify your .opvn files** if it's not correct you should update the OpenVPN client manually in the UI dashboard → 
+configuration → OpenVPN Client and redownload the .opvn files or you can edit yourself the .opvn file
