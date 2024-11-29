@@ -8,7 +8,7 @@ from vpns_utils import get_caddy_path, load_template_with_update, read_settings,
 
 def backup_caddy(docker: DockerManager, name: str) -> None:
     backup_dir = get_backup_path()
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_file = os.path.join(backup_dir, f"{name}-{timestamp}-remove.tgz")
 
     backup_cmd = f"sudo tar czf {backup_file} -C / opt/docker/volumes/{name}"
@@ -113,7 +113,8 @@ def main():
             )
         else:
             remove_caddy(docker, args.name)
-            print(f"Removed Caddy server {args.name}")
+            print(f"✓Removed Caddy server {args.name}")
+            print()
 
     except Exception as e:
         print(f"Error: {e}")

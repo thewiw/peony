@@ -14,7 +14,7 @@ def backup_all(docker: DockerManager, caddy_name: str, backup_dir: str = None, f
            os.system(f"sudo chown -R $USER:$USER {os.path.dirname(backup_dir)}")
 
    if not filename:
-       timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+       timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
        filename = f"{caddy_name}-{timestamp}.tgz"
 
    backup_file = os.path.join(backup_dir, filename)
