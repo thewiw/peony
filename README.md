@@ -70,16 +70,27 @@ Notes:
 Before creating any VPN, configure `vpn_settings` at project root:
 ```bash
 # Required - Must Fill:
-CADDY_HOSTNAME=           # Must match HOSTNAME from caddy_settings
-EASYRSA_REQ_COUNTRY=      # Two-letter country code (e.g., FR)
-EASYRSA_REQ_PROVINCE=     # State or province
-EASYRSA_REQ_CITY=         # City name
-EASYRSA_REQ_ORG=          # Organization name
-EASYRSA_REQ_EMAIL=        # Admin email address
-EASYRSA_DN=               # Distinguished name (e.g., org)
+CADDY_HOSTNAME=          # Must match HOSTNAME from caddy_settings
 
-# Optional with defaults:
-OPENVPN_PROT=udp         # Protocol (udp or tcp)
+# Easy-RSA Certificate Configuration:
+EASYRSA_DN=              # Distinguished name (e.g., "org")
+EASYRSA_REQ_COUNTRY=     # Two-letter country code (e.g., "FR")
+EASYRSA_REQ_PROVINCE=    # State or province
+EASYRSA_REQ_CITY=        # City name
+EASYRSA_REQ_ORG=         # Organization name
+EASYRSA_REQ_EMAIL=       # Admin email address
+EASYRSA_REQ_OU=          # Organizational Unit (optional)
+
+# Certificate Parameters (optional with defaults):
+EASYRSA_KEY_SIZE=4096    # Key size in bits 2048 or 4096 recommanded
+EASYRSA_CA_EXPIRE=10958  # CA certificate expiry in days
+EASYRSA_CERT_EXPIRE=5478 # Server certificate expiry in days
+EASYRSA_CERT_RENEW=365   # Certificate renewal period in days
+EASYRSA_CRL_DAYS=730     # Certificate validity period
+
+# OpenVPN Configuration (optional with defaults):
+OPENVPN_PORT=1194       # OpenVPN port
+OPENVPN_PROT=udp        # Protocol (udp or tcp)
 ```
 
 ### Creating a New VPN
@@ -143,7 +154,7 @@ Created automatically by the system before operations bellow:
 - Before updating a VPN
 - Before removing Caddy server
 
-Format: `[caddy-name]-[vpn-name]-YYYYMMDD_HHMM-remove.tgz`
+Format: `[caddy-name]-[vpn-name]-YYYYMMDD_HHMMSS-remove.tgz`
 
 #### 2. Manual Backups
 
