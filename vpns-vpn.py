@@ -64,7 +64,7 @@ def backup_vpn(docker: DockerManager, caddy_name: str, vpn_name: str) -> None:
     if not os.path.exists(vpn_path):
         return
         
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_file = os.path.join(
         backup_dir, f"{caddy_name}-{vpn_name}-{timestamp}-remove.tgz"
     )
@@ -232,6 +232,14 @@ def create_vpn(docker: DockerManager, name: str, caddy_name: str, config: dict) 
             container.restart()
         
         docker.start_compose(os.path.join(output_dir, "docker-compose.yml"))
+        print("\nInitializing VPN server (this might take few minutes)...")
+        print("============================")
+
+        log_cmd = f"docker logs -f {name} & while ! docker logs {name} 2>&1 | grep -q 'Start openvpn process'; do sleep 1; done && kill $!"
+        os.system(log_cmd)
+   
+        print("\n✓ VPN server is ready to use!")
+        print("============================")
         
         return admin_password
 
@@ -274,6 +282,9 @@ def update_vpn(docker: DockerManager, name: str, caddy_name: str, config: dict) 
 def remove_vpn(docker: DockerManager, name: str, caddy_name: str) -> None:
    vpn_path = get_config_path(name)
    container = docker.get_container(name)
+   
+   print("\nRemoving VPN server (this might take few minutes)...")
+
    
    if not os.path.exists(vpn_path) and not container:
        print(f"No VPN configuration found in {vpn_path}")
@@ -329,11 +340,11 @@ def main():
             vpn_port = docker.get_container_port(args.name)
             subnets = calculate_subnets(args.name)
             
-            print("\n=== VPN Summary ===")
+            print("\n======= VPN Summary =======")
             print(f"VPN Name: {args.name}")
             print(f"UI Username: admin")
             print(f"UI Password: {admin_password}") 
-            print("\n======")           
+            print("\n============================")           
             print(f"Network mask: {subnets['trust_subnet']}/24")
             print(f"Docker network mask: {subnets['docker_subnet']}")
             print(f"External Port: {vpn_port}")
@@ -343,7 +354,7 @@ def main():
             print(f"Updated VPN {args.name} in {vpn_path}")
         else:
             remove_vpn(docker, args.name, caddy_name)
-            print(f"Removed VPN {args.name} from {vpn_path}")
+            print(f"\n✓Removed VPN {args.name} from {vpn_path} !")
 
     except Exception as err:
         print(f"Error: {err}")

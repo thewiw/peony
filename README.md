@@ -20,7 +20,7 @@ This system consists of three main components:
 
 ## Directory Structure and Path Management
 
-The script checks directories in this order:
+The scripts check directories in this order:
 1. Looks for `/opt/wiw/` first
    - If found, uses:
      - `/opt/wiw/config/`: Configurations  
@@ -79,7 +79,6 @@ EASYRSA_REQ_EMAIL=        # Admin email address
 EASYRSA_DN=               # Distinguished name (e.g., org)
 
 # Optional with defaults:
-OPENVPN_PORT=1194         # Default OpenVPN port
 OPENVPN_PROT=udp         # Protocol (udp or tcp)
 ```
 
@@ -190,7 +189,7 @@ sudo python3 vpns-backup.py --dest /documents/backups --file backup.tgz --caddy 
    - Configuration files must be properly filled first
    - Caddy MUST be installed before creating any VPNs
    - VPNs can be created after Caddy is running
-   - We suggest you to only edit settings files
+   - We suggest you to only edit `vpn_settings` and `caddy_settings` files
 
 2. First VPN Creation
    - Initial setup may take time (key generation)
