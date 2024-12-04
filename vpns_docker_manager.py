@@ -47,7 +47,7 @@ class DockerManager:
                     )
         return used_ports
 
-    def get_free_port(self, start_port: int = 1194) -> int:
+    def get_free_port(self, start_port: int = 15000) -> int:
         used_ports = self.get_used_ports()
         port = start_port
         while port in used_ports:
@@ -57,7 +57,7 @@ class DockerManager:
     def get_container_port(self, name: str, container_port: int = 1194) -> Optional[int]:
         container = self.get_container(name)
         if container:
-            ports = container.attrs["NetworkSettings"]["Ports"]
+            ports = container.attrs["HostConfig"]["PortBindings"]
             port_bindings = ports.get(f"{container_port}/udp") or ports.get(f"{container_port}/tcp")
             if port_bindings:
                 return int(port_bindings[0]["HostPort"])

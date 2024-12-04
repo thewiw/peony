@@ -1,7 +1,4 @@
 import os
-import string
-import secrets
-
 
 def get_config_path(name: str = None) -> str:
     wiw_path = "/opt/wiw/config"
@@ -29,12 +26,6 @@ def create_vpn_directories(output_dir: str) -> None:
     directories = ["config", "pki", "clients", "db", "staticclients", "log"]
     for dir in directories:
         os.makedirs(os.path.join(output_dir, dir), exist_ok=True)
-
-
-def generate_password() -> str:
-    characts = string.ascii_letters + string.digits
-    return "".join(secrets.choice(characts) for _ in range(12))
-
 
 def get_backup_path() -> str:
     wiw_base = "/opt/wiw"
