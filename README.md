@@ -124,10 +124,9 @@ sudo python3 vpns-vpn.py update vpn01
 
 What happens during update:
 - Creates backup in default backup location
-- Updates all VPN configurations (server.conf, client.conf, certificates)
+- Updates all VPN configurations (server.conf, client.conf)
 - Stops and restarts VPN containers to apply changes
 - Updates Caddy configuration
-- Restarts all required services
 
 ```bash
 # Remove a VPN
@@ -230,7 +229,7 @@ sudo python3 vpns-backup.py --dest /documents/backups --file backup.tgz --caddy 
 After setup is complete:
 1. Access the VPN selection page: `https://[your-hostname]/vpn-select.html`
 2. Choose your VPN from the list
-3. Log in to the management interface with provided credentials
+3. Log in to the management interface with provided Admin credentials
 
 ### Verify Settings
 
@@ -241,6 +240,11 @@ After setup is complete:
 3. Click on Configuration → EasyRSA: View vars to ensure everything is okay.
 
 4. If everything is set up correctly, you can access Certificates and create a certificate.
+
+### Create Users
+
+administrators can manage their profile and create new user profiles from the Profile Configuration page, 
+Click on the user icon > Profile Configuration.
 
 #### Troubleshooting
 **Verify your .opvn files** if it's not correct you should update the OpenVPN client manually in the UI dashboard → 
