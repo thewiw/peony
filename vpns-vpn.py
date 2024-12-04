@@ -5,6 +5,7 @@ import argparse
 import secrets
 import random
 import string
+import shutil
 from datetime import datetime
 from vpns_docker_manager import DockerManager
 from vpns_utils import (
@@ -314,7 +315,14 @@ def create_vpn(docker: DockerManager, name: str, caddy_name: str, config: dict) 
         os.system(
             f"git clone https://github.com/d3vilh/openvpn-server.git {output_dir}"
         )
-        
+        git_dir = os.path.join(output_dir, '.git')
+        github_dir = os.path.join(output_dir, '.github')
+
+        if os.path.exists(git_dir):
+            shutil.rmtree(git_dir)
+
+        if os.path.exists(github_dir):
+            shutil.rmtree(github_dir)
         _create_vpn_directories(output_dir)
         
         admin_password = _generate_password()
