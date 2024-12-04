@@ -360,7 +360,13 @@ def update_vpn(docker: DockerManager, name: str, caddy_name: str, config: dict) 
 
     try:
         backup_vpn(docker, caddy_name, name)
-        context = _generate_vpn_context(docker, name, config, output_dir)
+        docker_compose_path = os.path.join(output_dir, "docker-compose.yml")
+        with open(docker_compose_path) as f:
+            for line in f:
+                if "OPENVPN_ADMIN_PASSWORD=" in line:
+                    admin_password = line.split("=")[1].strip()
+                    break
+        context = _generate_vpn_context(docker, name, config, output_dir, admin_password)
         _update_vpn_configs(output_dir, context)
         
         docker.stop_container(name)
