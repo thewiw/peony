@@ -70,12 +70,9 @@ Notes:
 Before creating any VPN, configure `vpn_settings` at project root:
 
 ```bash
-# Required - Must Fill:
-CADDY_HOSTNAME=          # Must match HOSTNAME from caddy_settings
 
 # Easy-RSA Certificate Configuration:
 
-EASYRSA_DN=              # Distinguished name (e.g., "org")
 EASYRSA_REQ_COUNTRY=     # Two-letter country code (e.g., "FR")
 EASYRSA_REQ_PROVINCE=    # State or province
 EASYRSA_REQ_CITY=        # City name
@@ -92,6 +89,8 @@ EASYRSA_CRL_DAYS=     # Certificate validity period
 
 # OpenVPN Configuration (optional with defaults):
 OPENVPN_PROT=udp        # Protocol (udp or tcp)
+OPENVPN_GATEWAY=false  # Route all client traffic through VPN(true or false)
+OPENVPN_DNS=false      
 ```
 
 ### Creating a New VPN
@@ -142,6 +141,16 @@ What happens during removal:
 - Removes VPN from Caddy configuration
 - Deletes all VPN files and certificates
 - Updates VPN selection page
+
+```bash
+# List all VPN
+sudo python3 vpns-vpn.py list
+```
+
+What happens during list:
+- Shows all configured VPNs
+- Displays each VPN's current status (Running, Exited, etc)
+- Shows the port number for each VPN
 
 ## 3. Backup System
 
