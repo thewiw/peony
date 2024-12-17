@@ -2,8 +2,12 @@
 import os
 import argparse
 from datetime import datetime
-from vpns_docker_manager import DockerManager
-from vpns_utils import get_backup_path, get_caddy_path
+try:
+    from peony.docker_manager import DockerManager
+    from peony.utils import get_backup_path, get_caddy_path
+except (ImportError, ModuleNotFoundError):
+    from docker_manager import DockerManager
+    from utils import get_backup_path, get_caddy_path
 
 def backup_all(docker: DockerManager, caddy_name: str, backup_dir: str = None, filename: str = None) -> None:
    if not backup_dir:

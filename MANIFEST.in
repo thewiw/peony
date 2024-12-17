@@ -1,0 +1,3 @@
+recursive-include src/peony/templates *
+include src/peony/caddy_settings
+include src/peony/vpn_settings

@@ -2,8 +2,24 @@
 import os
 import argparse
 from datetime import datetime
-from vpns_docker_manager import DockerManager
-from vpns_utils import get_caddy_path, load_template_with_update, read_settings, get_backup_path
+try:
+    from peony.docker_manager import DockerManager
+    from peony.utils import (
+        get_caddy_path, 
+        load_template_with_update, 
+        read_settings, 
+        get_backup_path, 
+        init_config
+    )
+except (ImportError, ModuleNotFoundError):
+    from docker_manager import DockerManager
+    from utils import (
+        get_caddy_path, 
+        load_template_with_update, 
+        read_settings, 
+        get_backup_path, 
+        init_config
+    )
 
 
 def backup_caddy(docker: DockerManager, name: str) -> None:
@@ -93,15 +109,19 @@ def remove_caddy(docker: DockerManager, name: str) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description="Manage Caddy server for OpenVPN")
-    parser.add_argument("action", choices=["create", "remove"])
+    parser.add_argument("action", choices=["create", "remove", 'init'])
     parser.add_argument(
         "name", nargs="?", default="caddy", help="Name for the Caddy container"
     )
     args = parser.parse_args()
 
     try:
+        if args.action == "init":
+            init_config()
+            print("Configuration files created in ~/.config/peony/ ready to be edited")
+            return
         docker = DockerManager()
-
+        
         if args.action == "create":
             config = read_settings("caddy_settings", {"hostname": None})
             if not config.get("hostname"):
